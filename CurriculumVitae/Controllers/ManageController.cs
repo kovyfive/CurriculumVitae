@@ -5,11 +5,11 @@
     using System.Web;
     using System.Web.Mvc;
 
-    using CurriculumVitae.Models;
-
     using Microsoft.AspNet.Identity;
     using Microsoft.AspNet.Identity.Owin;
     using Microsoft.Owin.Security;
+
+    using Models;
 
     [Authorize]
     public class ManageController : Controller
@@ -17,9 +17,9 @@
         // Used for XSRF protection when adding external logins
         private const string XsrfKey = "XsrfId";
 
-        private ApplicationSignInManager _signInManager;
+        private ApplicationSignInManager signInManager;
 
-        private ApplicationUserManager _userManager;
+        private ApplicationUserManager userManager;
 
         public ManageController()
         {
@@ -52,12 +52,12 @@
         {
             get
             {
-                return this._signInManager ?? this.HttpContext.GetOwinContext().Get<ApplicationSignInManager>();
+                return this.signInManager ?? this.HttpContext.GetOwinContext().Get<ApplicationSignInManager>();
             }
 
             private set
             {
-                this._signInManager = value;
+                this.signInManager = value;
             }
         }
 
@@ -65,22 +65,16 @@
         {
             get
             {
-                return this._userManager ?? this.HttpContext.GetOwinContext().GetUserManager<ApplicationUserManager>();
+                return this.userManager ?? this.HttpContext.GetOwinContext().GetUserManager<ApplicationUserManager>();
             }
 
             private set
             {
-                this._userManager = value;
+                this.userManager = value;
             }
         }
 
-        private IAuthenticationManager AuthenticationManager
-        {
-            get
-            {
-                return this.HttpContext.GetOwinContext().Authentication;
-            }
-        }
+        private IAuthenticationManager AuthenticationManager => this.HttpContext.GetOwinContext().Authentication;
 
         // GET: /Manage/AddPhoneNumber
         public ActionResult AddPhoneNumber()
@@ -99,17 +93,20 @@
             }
 
             // Generate the token and send it
-            var code =
-                await this.UserManager.GenerateChangePhoneNumberTokenAsync(this.User.Identity.GetUserId(), model.Number);
-            if (this.UserManager.SmsService != null)
+            var code = await this.UserManager.GenerateChangePhoneNumberTokenAsync(this.User.Identity.GetUserId(), model.Number);
+
+            if (this.UserManager.SmsService == null)
             {
-                var message = new IdentityMessage
-                                  {
-                                      Destination = model.Number,
-                                      Body = "Your security code is: " + code
-                                  };
-                await this.UserManager.SmsService.SendAsync(message);
+                return this.RedirectToAction("VerifyPhoneNumber", new { PhoneNumber = model.Number });
             }
+
+            var message = new IdentityMessage
+            {
+                Destination = model.Number,
+                Body = "Your security code is: " + code
+            };
+
+            await this.UserManager.SmsService.SendAsync(message);
 
             return this.RedirectToAction("VerifyPhoneNumber", new { PhoneNumber = model.Number });
         }
@@ -136,19 +133,22 @@
                     this.User.Identity.GetUserId(),
                     model.OldPassword,
                     model.NewPassword);
-            if (result.Succeeded)
-            {
-                var user = await this.UserManager.FindByIdAsync(this.User.Identity.GetUserId());
-                if (user != null)
-                {
-                    await this.SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
-                }
 
+            if (!result.Succeeded)
+            {
+                this.AddErrors(result);
+                return this.View(model);
+            }
+
+            var user = await this.UserManager.FindByIdAsync(this.User.Identity.GetUserId());
+            if (user == null)
+            {
                 return this.RedirectToAction("Index", new { Message = ManageMessageId.ChangePasswordSuccess });
             }
 
-            this.AddErrors(result);
-            return this.View(model);
+            await this.SignInManager.SignInAsync(user, false, false);
+
+            return this.RedirectToAction("Index", new { Message = ManageMessageId.ChangePasswordSuccess });
         }
 
         // POST: /Manage/DisableTwoFactorAuthentication
@@ -157,11 +157,14 @@
         public async Task<ActionResult> DisableTwoFactorAuthentication()
         {
             await this.UserManager.SetTwoFactorEnabledAsync(this.User.Identity.GetUserId(), false);
+
             var user = await this.UserManager.FindByIdAsync(this.User.Identity.GetUserId());
-            if (user != null)
+            if (user == null)
             {
-                await this.SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+                return this.RedirectToAction("Index", "Manage");
             }
+
+            await this.SignInManager.SignInAsync(user, false, false);
 
             return this.RedirectToAction("Index", "Manage");
         }
@@ -175,7 +178,7 @@
             var user = await this.UserManager.FindByIdAsync(this.User.Identity.GetUserId());
             if (user != null)
             {
-                await this.SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+                await this.SignInManager.SignInAsync(user, false, false);
             }
 
             return this.RedirectToAction("Index", "Manage");
@@ -185,30 +188,30 @@
         public async Task<ActionResult> Index(ManageMessageId? message)
         {
             this.ViewBag.StatusMessage = message == ManageMessageId.ChangePasswordSuccess
-                                             ? "Your password has been changed."
-                                             : message == ManageMessageId.SetPasswordSuccess
-                                                   ? "Your password has been set."
-                                                   : message == ManageMessageId.SetTwoFactorSuccess
-                                                         ? "Your two-factor authentication provider has been set."
-                                                         : message == ManageMessageId.Error
-                                                               ? "An error has occurred."
-                                                               : message == ManageMessageId.AddPhoneSuccess
-                                                                     ? "Your phone number was added."
-                                                                     : message == ManageMessageId.RemovePhoneSuccess
-                                                                           ? "Your phone number was removed."
-                                                                           : string.Empty;
+                ? "Your password has been changed."
+                : message == ManageMessageId.SetPasswordSuccess
+                    ? "Your password has been set."
+                    : message == ManageMessageId.SetTwoFactorSuccess
+                            ? "Your two-factor authentication provider has been set."
+                            : message == ManageMessageId.Error
+                                ? "An error has occurred."
+                                : message == ManageMessageId.AddPhoneSuccess
+                                        ? "Your phone number was added."
+                                        : message == ManageMessageId.RemovePhoneSuccess
+                                            ? "Your phone number was removed."
+                                            : string.Empty;
 
             var userId = this.User.Identity.GetUserId();
             var model = new IndexViewModel
-                            {
-                                HasPassword = this.HasPassword(),
-                                PhoneNumber = await this.UserManager.GetPhoneNumberAsync(userId),
-                                TwoFactor = await this.UserManager.GetTwoFactorEnabledAsync(userId),
-                                Logins = await this.UserManager.GetLoginsAsync(userId),
-                                BrowserRemembered =
+            {
+                HasPassword = this.HasPassword(),
+                PhoneNumber = await this.UserManager.GetPhoneNumberAsync(userId),
+                TwoFactor = await this.UserManager.GetTwoFactorEnabledAsync(userId),
+                Logins = await this.UserManager.GetLoginsAsync(userId),
+                BrowserRemembered =
                                     await
                                     this.AuthenticationManager.TwoFactorBrowserRememberedAsync(userId)
-                            };
+            };
             return this.View(model);
         }
 
@@ -227,14 +230,14 @@
         // GET: /Manage/LinkLoginCallback
         public async Task<ActionResult> LinkLoginCallback()
         {
-            var loginInfo =
-                await this.AuthenticationManager.GetExternalLoginInfoAsync(XsrfKey, this.User.Identity.GetUserId());
+            var loginInfo = await this.AuthenticationManager.GetExternalLoginInfoAsync(XsrfKey, this.User.Identity.GetUserId());
             if (loginInfo == null)
             {
                 return this.RedirectToAction("ManageLogins", new { Message = ManageMessageId.Error });
             }
 
             var result = await this.UserManager.AddLoginAsync(this.User.Identity.GetUserId(), loginInfo.Login);
+
             return result.Succeeded
                        ? this.RedirectToAction("ManageLogins")
                        : this.RedirectToAction("ManageLogins", new { Message = ManageMessageId.Error });
@@ -244,10 +247,11 @@
         public async Task<ActionResult> ManageLogins(ManageMessageId? message)
         {
             this.ViewBag.StatusMessage = message == ManageMessageId.RemoveLoginSuccess
-                                             ? "The external login was removed."
-                                             : message == ManageMessageId.Error
-                                                   ? "An error has occurred."
-                                                   : string.Empty;
+                ? "The external login was removed."
+                : message == ManageMessageId.Error
+                    ? "An error has occurred."
+                    : string.Empty;
+
             var user = await this.UserManager.FindByIdAsync(this.User.Identity.GetUserId());
             if (user == null)
             {
@@ -259,7 +263,9 @@
                 this.AuthenticationManager.GetExternalAuthenticationTypes()
                     .Where(auth => userLogins.All(ul => auth.AuthenticationType != ul.LoginProvider))
                     .ToList();
+
             this.ViewBag.ShowRemoveButton = user.PasswordHash != null || userLogins.Count > 1;
+
             return this.View(new ManageLoginsViewModel { CurrentLogins = userLogins, OtherLogins = otherLogins });
         }
 
@@ -274,12 +280,13 @@
                 this.UserManager.RemoveLoginAsync(
                     this.User.Identity.GetUserId(),
                     new UserLoginInfo(loginProvider, providerKey));
+
             if (result.Succeeded)
             {
                 var user = await this.UserManager.FindByIdAsync(this.User.Identity.GetUserId());
                 if (user != null)
                 {
-                    await this.SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+                    await this.SignInManager.SignInAsync(user, false, false);
                 }
 
                 message = ManageMessageId.RemoveLoginSuccess;
@@ -304,10 +311,12 @@
             }
 
             var user = await this.UserManager.FindByIdAsync(this.User.Identity.GetUserId());
-            if (user != null)
+            if (user == null)
             {
-                await this.SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+                return this.RedirectToAction("Index", new { Message = ManageMessageId.RemovePhoneSuccess });
             }
+
+            await this.SignInManager.SignInAsync(user, false, false);
 
             return this.RedirectToAction("Index", new { Message = ManageMessageId.RemovePhoneSuccess });
         }
@@ -323,33 +332,32 @@
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> SetPassword(SetPasswordViewModel model)
         {
-            if (this.ModelState.IsValid)
+            if (!this.ModelState.IsValid)
             {
-                var result = await this.UserManager.AddPasswordAsync(this.User.Identity.GetUserId(), model.NewPassword);
-                if (result.Succeeded)
-                {
-                    var user = await this.UserManager.FindByIdAsync(this.User.Identity.GetUserId());
-                    if (user != null)
-                    {
-                        await this.SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
-                    }
-
-                    return this.RedirectToAction("Index", new { Message = ManageMessageId.SetPasswordSuccess });
-                }
-
-                this.AddErrors(result);
+                return this.View(model);
             }
 
-            // If we got this far, something failed, redisplay form
-            return this.View(model);
+            var result = await this.UserManager.AddPasswordAsync(this.User.Identity.GetUserId(), model.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                this.AddErrors(result);
+
+                return this.View(model);
+            }
+
+            var user = await this.UserManager.FindByIdAsync(this.User.Identity.GetUserId());
+            if (user != null)
+            {
+                await this.SignInManager.SignInAsync(user, false, false);
+            }
+
+            return this.RedirectToAction("Index", new { Message = ManageMessageId.SetPasswordSuccess });
         }
 
         // GET: /Manage/VerifyPhoneNumber
-        public async Task<ActionResult> VerifyPhoneNumber(string phoneNumber)
+        public ActionResult VerifyPhoneNumber(string phoneNumber)
         {
-            var code =
-                await this.UserManager.GenerateChangePhoneNumberTokenAsync(this.User.Identity.GetUserId(), phoneNumber);
-
             // Send an SMS through the SMS provider to verify the phone number
             return phoneNumber == null
                        ? this.View("Error")
@@ -369,28 +377,28 @@
             var result =
                 await
                 this.UserManager.ChangePhoneNumberAsync(this.User.Identity.GetUserId(), model.PhoneNumber, model.Code);
-            if (result.Succeeded)
-            {
-                var user = await this.UserManager.FindByIdAsync(this.User.Identity.GetUserId());
-                if (user != null)
-                {
-                    await this.SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
-                }
 
-                return this.RedirectToAction("Index", new { Message = ManageMessageId.AddPhoneSuccess });
+            if (!result.Succeeded)
+            {
+                this.ModelState.AddModelError(string.Empty, "Failed to verify phone");
+                return this.View(model);
             }
 
-            // If we got this far, something failed, redisplay form
-            this.ModelState.AddModelError(string.Empty, "Failed to verify phone");
-            return this.View(model);
+            var user = await this.UserManager.FindByIdAsync(this.User.Identity.GetUserId());
+            if (user != null)
+            {
+                await this.SignInManager.SignInAsync(user, false, false);
+            }
+
+            return this.RedirectToAction("Index", new { Message = ManageMessageId.AddPhoneSuccess });
         }
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing && this._userManager != null)
+            if (disposing && this.userManager != null)
             {
-                this._userManager.Dispose();
-                this._userManager = null;
+                this.userManager.Dispose();
+                this.userManager = null;
             }
 
             base.Dispose(disposing);
@@ -407,23 +415,7 @@
         private bool HasPassword()
         {
             var user = this.UserManager.FindById(this.User.Identity.GetUserId());
-            if (user != null)
-            {
-                return user.PasswordHash != null;
-            }
-
-            return false;
-        }
-
-        private bool HasPhoneNumber()
-        {
-            var user = this.UserManager.FindById(this.User.Identity.GetUserId());
-            if (user != null)
-            {
-                return user.PhoneNumber != null;
-            }
-
-            return false;
+            return user?.PasswordHash != null;
         }
     }
 }

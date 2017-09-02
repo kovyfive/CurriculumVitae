@@ -85,9 +85,9 @@
             // Enable the application to use bearer tokens to authenticate users
             app.UseOAuthBearerTokens(OAuthOptions);
 
-            // app.UseFacebookAuthentication(
-            // appId: "316327395506865",
-            // appSecret: "4e6f77117638ce02602e842766ef0ae7");
+            //app.UseFacebookAuthentication(
+            //appId: "316327395506865",
+            //appSecret: "4e6f77117638ce02602e842766ef0ae7");
 
             // app.UseGoogleAuthentication(new GoogleOAuth2AuthenticationOptions()
             // {

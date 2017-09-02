@@ -6,11 +6,11 @@
     using System.Web;
     using System.Web.Mvc;
 
-    using CurriculumVitae.Models;
-
     using Microsoft.AspNet.Identity;
     using Microsoft.AspNet.Identity.Owin;
     using Microsoft.Owin.Security;
+
+    using Models;
 
     [Authorize]
     public class AccountController : Controller
@@ -18,9 +18,9 @@
         // Used for XSRF protection when adding external logins
         private const string XsrfKey = "XsrfId";
 
-        private ApplicationSignInManager _signInManager;
+        private ApplicationSignInManager signInManager;
 
-        private ApplicationUserManager _userManager;
+        private ApplicationUserManager userManager;
 
         public AccountController()
         {
@@ -36,12 +36,12 @@
         {
             get
             {
-                return this._signInManager ?? this.HttpContext.GetOwinContext().Get<ApplicationSignInManager>();
+                return this.signInManager ?? this.HttpContext.GetOwinContext().Get<ApplicationSignInManager>();
             }
 
             private set
             {
-                this._signInManager = value;
+                this.signInManager = value;
             }
         }
 
@@ -49,22 +49,16 @@
         {
             get
             {
-                return this._userManager ?? this.HttpContext.GetOwinContext().GetUserManager<ApplicationUserManager>();
+                return this.userManager ?? this.HttpContext.GetOwinContext().GetUserManager<ApplicationUserManager>();
             }
 
             private set
             {
-                this._userManager = value;
+                this.userManager = value;
             }
         }
 
-        private IAuthenticationManager AuthenticationManager
-        {
-            get
-            {
-                return this.HttpContext.GetOwinContext().Authentication;
-            }
-        }
+        private IAuthenticationManager AuthenticationManager => this.HttpContext.GetOwinContext().Authentication;
 
         // The Authorize Action is the end point which gets called when you access any
         // protected Web API. If the user is not logged in then they will be redirected to 
@@ -74,6 +68,7 @@
         {
             var claims = new ClaimsPrincipal(this.User).Claims.ToArray();
             var identity = new ClaimsIdentity(claims, "Bearer");
+
             this.AuthenticationManager.SignIn(identity);
             return new EmptyResult();
         }
@@ -114,7 +109,7 @@
             }
 
             // Sign in the user with this external login provider if the user already has a login
-            var result = await this.SignInManager.ExternalSignInAsync(loginInfo, isPersistent: false);
+            var result = await this.SignInManager.ExternalSignInAsync(loginInfo, false);
             switch (result)
             {
                 case SignInStatus.Success:
@@ -123,7 +118,6 @@
                     return this.View("Lockout");
                 case SignInStatus.RequiresVerification:
                     return this.RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = false });
-                case SignInStatus.Failure:
                 default:
 
                     // If the user does not have an account, then prompt the user to create an account
@@ -158,18 +152,18 @@
                 }
 
                 var user = new ApplicationUser
-                               {
-                                   UserName = model.Email,
-                                   Email = model.Email,
-                                   Hometown = model.Hometown
-                               };
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    Hometown = model.Hometown
+                };
                 var result = await this.UserManager.CreateAsync(user);
                 if (result.Succeeded)
                 {
                     result = await this.UserManager.AddLoginAsync(user.Id, info.Login);
                     if (result.Succeeded)
                     {
-                        await this.SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+                        await this.SignInManager.SignInAsync(user, false, false);
                         return this.RedirectToLocal(returnUrl);
                     }
                 }
@@ -201,24 +195,18 @@
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> ForgotPassword(ForgotPasswordViewModel model)
         {
-            if (this.ModelState.IsValid)
+            if (!this.ModelState.IsValid)
             {
-                var user = await this.UserManager.FindByNameAsync(model.Email);
-                if (user == null || !(await this.UserManager.IsEmailConfirmedAsync(user.Id)))
-                {
-                    // Don't reveal that the user does not exist or is not confirmed
-                    return this.View("ForgotPasswordConfirmation");
-                }
-
-                // For more information on how to enable account confirmation and password reset please visit http://go.microsoft.com/fwlink/?LinkID=320771
-                // Send an email with this link
-                // string code = await UserManager.GeneratePasswordResetTokenAsync(user.Id);
-                // var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);		
-                // await UserManager.SendEmailAsync(user.Id, "Reset Password", "Please reset your password by clicking <a href=\"" + callbackUrl + "\">here</a>");
-                // return RedirectToAction("ForgotPasswordConfirmation", "Account");
+                return this.View(model);
             }
 
-            // If we got this far, something failed, redisplay form
+            var user = await this.UserManager.FindByNameAsync(model.Email);
+            if (user == null || !await this.UserManager.IsEmailConfirmedAsync(user.Id))
+            {
+                // Don't reveal that the user does not exist or is not confirmed
+                return this.View("ForgotPasswordConfirmation");
+            }
+
             return this.View(model);
         }
 
@@ -256,7 +244,8 @@
                     model.Email,
                     model.Password,
                     model.RememberMe,
-                    shouldLockout: false);
+                    false);
+
             switch (result)
             {
                 case SignInStatus.Success:
@@ -266,8 +255,7 @@
                 case SignInStatus.RequiresVerification:
                     return this.RedirectToAction(
                         "SendCode",
-                        new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
-                case SignInStatus.Failure:
+                        new { ReturnUrl = returnUrl, model.RememberMe });
                 default:
                     this.ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                     return this.View(model);
@@ -299,21 +287,16 @@
             if (this.ModelState.IsValid)
             {
                 var user = new ApplicationUser
-                               {
-                                   UserName = model.Email,
-                                   Email = model.Email,
-                                   Hometown = model.Hometown
-                               };
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    Hometown = model.Hometown
+                };
                 var result = await this.UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    await this.SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+                    await this.SignInManager.SignInAsync(user, false, false);
 
-                    // For more information on how to enable account confirmation and password reset please visit http://go.microsoft.com/fwlink/?LinkID=320771
-                    // Send an email with this link
-                    // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
-                    // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-                    // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
                     return this.RedirectToAction("Index", "Home");
                 }
 
@@ -328,7 +311,9 @@
         [AllowAnonymous]
         public ActionResult ResetPassword(string code)
         {
-            return code == null ? this.View("Error") : this.View();
+            return code == null
+                ? this.View("Error")
+                : this.View();
         }
 
         // POST: /Account/ResetPassword
@@ -350,13 +335,14 @@
             }
 
             var result = await this.UserManager.ResetPasswordAsync(user.Id, model.Code, model.Password);
-            if (result.Succeeded)
+
+            if (!result.Succeeded)
             {
-                return this.RedirectToAction("ResetPasswordConfirmation", "Account");
+                this.AddErrors(result);
+                return this.View();
             }
 
-            this.AddErrors(result);
-            return this.View();
+            return this.RedirectToAction("ResetPasswordConfirmation", "Account");
         }
 
         // GET: /Account/ResetPasswordConfirmation
@@ -377,11 +363,11 @@
             }
 
             var userFactors = await this.UserManager.GetValidTwoFactorProvidersAsync(userId);
-            var factorOptions =
-                userFactors.Select(purpose => new SelectListItem { Text = purpose, Value = purpose }).ToList();
-            return
-                this.View(
-                    new SendCodeViewModel { Providers = factorOptions, ReturnUrl = returnUrl, RememberMe = rememberMe });
+            var factorOptions = userFactors
+                .Select(purpose => new SelectListItem { Text = purpose, Value = purpose })
+                .ToList();
+
+            return this.View(new SendCodeViewModel { Providers = factorOptions, ReturnUrl = returnUrl, RememberMe = rememberMe });
         }
 
         // POST: /Account/SendCode
@@ -401,9 +387,7 @@
                 return this.View("Error");
             }
 
-            return this.RedirectToAction(
-                "VerifyCode",
-                new { Provider = model.SelectedProvider, ReturnUrl = model.ReturnUrl, RememberMe = model.RememberMe });
+            return this.RedirectToAction("VerifyCode", new { Provider = model.SelectedProvider, model.ReturnUrl, model.RememberMe });
         }
 
         // GET: /Account/VerifyCode
@@ -416,9 +400,7 @@
                 return this.View("Error");
             }
 
-            return
-                this.View(
-                    new VerifyCodeViewModel { Provider = provider, ReturnUrl = returnUrl, RememberMe = rememberMe });
+            return this.View(new VerifyCodeViewModel { Provider = provider, ReturnUrl = returnUrl, RememberMe = rememberMe });
         }
 
         // POST: /Account/VerifyCode
@@ -441,15 +423,15 @@
                 this.SignInManager.TwoFactorSignInAsync(
                     model.Provider,
                     model.Code,
-                    isPersistent: model.RememberMe,
-                    rememberBrowser: model.RememberBrowser);
+                    model.RememberMe,
+                    model.RememberBrowser);
+
             switch (result)
             {
                 case SignInStatus.Success:
                     return this.RedirectToLocal(model.ReturnUrl);
                 case SignInStatus.LockedOut:
                     return this.View("Lockout");
-                case SignInStatus.Failure:
                 default:
                     this.ModelState.AddModelError(string.Empty, "Invalid code.");
                     return this.View(model);
@@ -460,16 +442,16 @@
         {
             if (disposing)
             {
-                if (this._userManager != null)
+                if (this.userManager != null)
                 {
-                    this._userManager.Dispose();
-                    this._userManager = null;
+                    this.userManager.Dispose();
+                    this.userManager = null;
                 }
 
-                if (this._signInManager != null)
+                if (this.signInManager != null)
                 {
-                    this._signInManager.Dispose();
-                    this._signInManager = null;
+                    this.signInManager.Dispose();
+                    this.signInManager = null;
                 }
             }
 
