@@ -1,13 +1,13 @@
-﻿using System.Web;
-using System.Web.Http;
-
-using CurriculumViate.Models;
-
-using Microsoft.AspNet.Identity;
-using Microsoft.AspNet.Identity.Owin;
-
-namespace CurriculumViate.Controllers
+﻿namespace CurriculumVitae.Controllers
 {
+    using System.Web;
+    using System.Web.Http;
+
+    using CurriculumVitae.Models;
+
+    using Microsoft.AspNet.Identity;
+    using Microsoft.AspNet.Identity.Owin;
+
     [Authorize]
     public class MeController : ApiController
     {
@@ -26,7 +26,8 @@ namespace CurriculumViate.Controllers
         {
             get
             {
-                return this._userManager ?? HttpContext.Current.GetOwinContext().GetUserManager<ApplicationUserManager>();
+                return this._userManager
+                       ?? HttpContext.Current.GetOwinContext().GetUserManager<ApplicationUserManager>();
             }
 
             private set

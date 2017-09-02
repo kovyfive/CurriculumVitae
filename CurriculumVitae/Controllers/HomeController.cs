@@ -1,7 +1,7 @@
-﻿using System.Web.Mvc;
-
-namespace CurriculumViate.Controllers
+﻿namespace CurriculumVitae.Controllers
 {
+    using System.Web.Mvc;
+
     [Authorize]
     public class HomeController : Controller
     {

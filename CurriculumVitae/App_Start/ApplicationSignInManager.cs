@@ -1,13 +1,13 @@
-﻿namespace CurriculumViate
+﻿namespace CurriculumVitae
 {
     using System.Security.Claims;
     using System.Threading.Tasks;
 
+    using CurriculumVitae.Models;
+
     using Microsoft.AspNet.Identity.Owin;
     using Microsoft.Owin;
     using Microsoft.Owin.Security;
-
-    using Models;
 
     public class ApplicationSignInManager : SignInManager<ApplicationUser, string>
     {
@@ -18,9 +18,13 @@
         {
         }
 
-        public static ApplicationSignInManager Create(IdentityFactoryOptions<ApplicationSignInManager> options, IOwinContext context)
+        public static ApplicationSignInManager Create(
+            IdentityFactoryOptions<ApplicationSignInManager> options,
+            IOwinContext context)
         {
-            return new ApplicationSignInManager(context.GetUserManager<ApplicationUserManager>(), context.Authentication);
+            return new ApplicationSignInManager(
+                context.GetUserManager<ApplicationUserManager>(),
+                context.Authentication);
         }
 
         public override Task<ClaimsIdentity> CreateUserIdentityAsync(ApplicationUser user)

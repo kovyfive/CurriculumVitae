@@ -1,25 +1,31 @@
-using System;
-using System.Globalization;
-using System.Linq;
-using System.Reflection;
-using System.Web.Http.Controllers;
-using System.Web.Http.Description;
-using System.Xml.XPath;
-using CurriculumViate.Areas.HelpPage.ModelDescriptions;
-
-namespace CurriculumViate.Areas.HelpPage
+namespace CurriculumVitae.Areas.HelpPage
 {
+    using System;
+    using System.Globalization;
+    using System.Linq;
+    using System.Reflection;
+    using System.Web.Http.Controllers;
+    using System.Web.Http.Description;
+    using System.Xml.XPath;
+
+    using CurriculumVitae.Areas.HelpPage.ModelDescriptions;
+
     /// <summary>
     /// A custom <see cref="IDocumentationProvider"/> that reads the API documentation from an XML documentation file.
     /// </summary>
     public class XmlDocumentationProvider : IDocumentationProvider, IModelDocumentationProvider
     {
-        private XPathNavigator _documentNavigator;
-        private const string TypeExpression = "/doc/members/member[@name='T:{0}']";
-        private const string MethodExpression = "/doc/members/member[@name='M:{0}']";
-        private const string PropertyExpression = "/doc/members/member[@name='P:{0}']";
         private const string FieldExpression = "/doc/members/member[@name='F:{0}']";
+
+        private const string MethodExpression = "/doc/members/member[@name='M:{0}']";
+
         private const string ParameterExpression = "param[@name='{0}']";
+
+        private const string PropertyExpression = "/doc/members/member[@name='P:{0}']";
+
+        private const string TypeExpression = "/doc/members/member[@name='T:{0}']";
+
+        private XPathNavigator _documentNavigator;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="XmlDocumentationProvider"/> class.
@@ -57,7 +63,9 @@ namespace CurriculumViate.Areas.HelpPage
                 if (methodNode != null)
                 {
                     var parameterName = reflectedParameterDescriptor.ParameterInfo.Name;
-                    var parameterNode = methodNode.SelectSingleNode(string.Format(CultureInfo.InvariantCulture, ParameterExpression, parameterName));
+                    var parameterNode =
+                        methodNode.SelectSingleNode(
+                            string.Format(CultureInfo.InvariantCulture, ParameterExpression, parameterName));
                     if (parameterNode != null)
                     {
                         return parameterNode.Value.Trim();
@@ -68,15 +76,13 @@ namespace CurriculumViate.Areas.HelpPage
             return null;
         }
 
-        public string GetResponseDocumentation(HttpActionDescriptor actionDescriptor)
-        {
-            var methodNode = this.GetMethodNode(actionDescriptor);
-            return GetTagValue(methodNode, "returns");
-        }
-
         public string GetDocumentation(MemberInfo member)
         {
-            var memberName = string.Format(CultureInfo.InvariantCulture, "{0}.{1}", GetTypeName(member.DeclaringType), member.Name);
+            var memberName = string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}.{1}",
+                GetTypeName(member.DeclaringType),
+                member.Name);
             var expression = member.MemberType == MemberTypes.Field ? FieldExpression : PropertyExpression;
             var selectExpression = string.Format(CultureInfo.InvariantCulture, expression, memberName);
             var propertyNode = this._documentNavigator.SelectSingleNode(selectExpression);
@@ -89,21 +95,19 @@ namespace CurriculumViate.Areas.HelpPage
             return GetTagValue(typeNode, "summary");
         }
 
-        private XPathNavigator GetMethodNode(HttpActionDescriptor actionDescriptor)
+        public string GetResponseDocumentation(HttpActionDescriptor actionDescriptor)
         {
-            var reflectedActionDescriptor = actionDescriptor as ReflectedHttpActionDescriptor;
-            if (reflectedActionDescriptor != null)
-            {
-                var selectExpression = string.Format(CultureInfo.InvariantCulture, MethodExpression, GetMemberName(reflectedActionDescriptor.MethodInfo));
-                return this._documentNavigator.SelectSingleNode(selectExpression);
-            }
-
-            return null;
+            var methodNode = this.GetMethodNode(actionDescriptor);
+            return GetTagValue(methodNode, "returns");
         }
 
         private static string GetMemberName(MethodInfo method)
         {
-            var name = string.Format(CultureInfo.InvariantCulture, "{0}.{1}", GetTypeName(method.DeclaringType), method.Name);
+            var name = string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}.{1}",
+                GetTypeName(method.DeclaringType),
+                method.Name);
             var parameters = method.GetParameters();
             if (parameters.Length != 0)
             {
@@ -128,13 +132,6 @@ namespace CurriculumViate.Areas.HelpPage
             return null;
         }
 
-        private XPathNavigator GetTypeNode(Type type)
-        {
-            var controllerTypeName = GetTypeName(type);
-            var selectExpression = string.Format(CultureInfo.InvariantCulture, TypeExpression, controllerTypeName);
-            return this._documentNavigator.SelectSingleNode(selectExpression);
-        }
-
         private static string GetTypeName(Type type)
         {
             var name = type.FullName;
@@ -148,7 +145,11 @@ namespace CurriculumViate.Areas.HelpPage
                 // Trim the generic parameter counts from the name
                 genericTypeName = genericTypeName.Substring(0, genericTypeName.IndexOf('`'));
                 var argumentTypeNames = genericArguments.Select(t => GetTypeName(t)).ToArray();
-                name = string.Format(CultureInfo.InvariantCulture, "{0}{{{1}}}", genericTypeName, string.Join(",", argumentTypeNames));
+                name = string.Format(
+                    CultureInfo.InvariantCulture,
+                    "{0}{{{1}}}",
+                    genericTypeName,
+                    string.Join(",", argumentTypeNames));
             }
 
             if (type.IsNested)
@@ -158,6 +159,28 @@ namespace CurriculumViate.Areas.HelpPage
             }
 
             return name;
+        }
+
+        private XPathNavigator GetMethodNode(HttpActionDescriptor actionDescriptor)
+        {
+            var reflectedActionDescriptor = actionDescriptor as ReflectedHttpActionDescriptor;
+            if (reflectedActionDescriptor != null)
+            {
+                var selectExpression = string.Format(
+                    CultureInfo.InvariantCulture,
+                    MethodExpression,
+                    GetMemberName(reflectedActionDescriptor.MethodInfo));
+                return this._documentNavigator.SelectSingleNode(selectExpression);
+            }
+
+            return null;
+        }
+
+        private XPathNavigator GetTypeNode(Type type)
+        {
+            var controllerTypeName = GetTypeName(type);
+            var selectExpression = string.Format(CultureInfo.InvariantCulture, TypeExpression, controllerTypeName);
+            return this._documentNavigator.SelectSingleNode(selectExpression);
         }
     }
 }

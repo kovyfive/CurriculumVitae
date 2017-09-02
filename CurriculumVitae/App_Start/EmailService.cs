@@ -1,4 +1,4 @@
-﻿namespace CurriculumViate
+﻿namespace CurriculumVitae
 {
     using System.Threading.Tasks;
 

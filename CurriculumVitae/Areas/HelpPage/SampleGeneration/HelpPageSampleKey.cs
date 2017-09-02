@@ -1,4 +1,4 @@
-namespace CurriculumViate.Areas.HelpPage.SampleGeneration
+namespace CurriculumVitae.Areas.HelpPage.SampleGeneration
 {
     using System;
     using System.Collections.Generic;
@@ -64,11 +64,18 @@ namespace CurriculumViate.Areas.HelpPage.SampleGeneration
         /// <param name="parameterNames">
         /// The parameter names.
         /// </param>
-        public HelpPageSampleKey(SampleDirection sampleDirection, string controllerName, string actionName, IEnumerable<string> parameterNames)
+        public HelpPageSampleKey(
+            SampleDirection sampleDirection,
+            string controllerName,
+            string actionName,
+            IEnumerable<string> parameterNames)
         {
             if (!Enum.IsDefined(typeof(SampleDirection), sampleDirection))
             {
-                throw new InvalidEnumArgumentException(nameof(sampleDirection), (int)sampleDirection, typeof(SampleDirection));
+                throw new InvalidEnumArgumentException(
+                    nameof(sampleDirection),
+                    (int)sampleDirection,
+                    typeof(SampleDirection));
             }
 
             if (controllerName == null)
@@ -111,7 +118,12 @@ namespace CurriculumViate.Areas.HelpPage.SampleGeneration
         /// <param name="parameterNames">
         /// The parameter names.
         /// </param>
-        public HelpPageSampleKey(MediaTypeHeaderValue mediaType, SampleDirection sampleDirection, string controllerName, string actionName, IEnumerable<string> parameterNames)
+        public HelpPageSampleKey(
+            MediaTypeHeaderValue mediaType,
+            SampleDirection sampleDirection,
+            string controllerName,
+            string actionName,
+            IEnumerable<string> parameterNames)
             : this(sampleDirection, controllerName, actionName, parameterNames)
         {
             if (mediaType == null)
@@ -123,20 +135,20 @@ namespace CurriculumViate.Areas.HelpPage.SampleGeneration
         }
 
         /// <summary>
-        /// Gets the name of the controller.
-        /// </summary>
-        /// <value>
-        /// The name of the controller.
-        /// </value>
-        public string ControllerName { get; } = string.Empty;
-
-        /// <summary>
         /// Gets the name of the action.
         /// </summary>
         /// <value>
         /// The name of the action.
         /// </value>
         public string ActionName { get; } = string.Empty;
+
+        /// <summary>
+        /// Gets the name of the controller.
+        /// </summary>
+        /// <value>
+        /// The name of the controller.
+        /// </value>
+        public string ControllerName { get; } = string.Empty;
 
         /// <summary>
         /// Gets the media type.
@@ -167,17 +179,17 @@ namespace CurriculumViate.Areas.HelpPage.SampleGeneration
             }
 
             return string.Equals(this.ControllerName, otherKey.ControllerName, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(this.ActionName, otherKey.ActionName, StringComparison.OrdinalIgnoreCase)
-                && (this.MediaType == otherKey.MediaType || (this.MediaType != null && this.MediaType.Equals(otherKey.MediaType)))
-                && this.ParameterType == otherKey.ParameterType
-                && this.SampleDirection == otherKey.SampleDirection
-                && this.ParameterNames.SetEquals(otherKey.ParameterNames);
+                   && string.Equals(this.ActionName, otherKey.ActionName, StringComparison.OrdinalIgnoreCase)
+                   && (this.MediaType == otherKey.MediaType
+                       || (this.MediaType != null && this.MediaType.Equals(otherKey.MediaType)))
+                   && this.ParameterType == otherKey.ParameterType && this.SampleDirection == otherKey.SampleDirection
+                   && this.ParameterNames.SetEquals(otherKey.ParameterNames);
         }
 
         public override int GetHashCode()
         {
             var hashCode = this.ControllerName.ToUpperInvariant().GetHashCode()
-                ^ this.ActionName.ToUpperInvariant().GetHashCode();
+                           ^ this.ActionName.ToUpperInvariant().GetHashCode();
 
             if (this.MediaType != null)
             {

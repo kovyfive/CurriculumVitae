@@ -1,4 +1,4 @@
-﻿namespace CurriculumViate
+﻿namespace CurriculumVitae
 {
     using System.Web.Mvc;
     using System.Web.Routing;
@@ -13,7 +13,6 @@
                 name: "Default",
                 url: "{controller}/{action}/{id}",
                 defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional });
-
         }
     }
 }

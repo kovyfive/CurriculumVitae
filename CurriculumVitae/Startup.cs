@@ -1,10 +1,13 @@
-﻿using Microsoft.Owin;
-using Owin;
+﻿using CurriculumVitae;
 
-[assembly: OwinStartup(typeof(CurriculumViate.Startup))]
+using Microsoft.Owin;
 
-namespace CurriculumViate
+[assembly: OwinStartup(typeof(Startup))]
+
+namespace CurriculumVitae
 {
+    using Owin;
+
     public partial class Startup
     {
         public void Configuration(IAppBuilder app)

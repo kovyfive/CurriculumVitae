@@ -1,9 +1,9 @@
-using System.Web.Http;
-using System.Web.Mvc;
-
-namespace CurriculumViate.Areas.HelpPage
+namespace CurriculumVitae.Areas.HelpPage
 {
-    using CurriculumViate.Areas.HelpPage.App_Start;
+    using System.Web.Http;
+    using System.Web.Mvc;
+
+    using CurriculumVitae.Areas.HelpPage.App_Start;
 
     public class HelpPageAreaRegistration : AreaRegistration
     {

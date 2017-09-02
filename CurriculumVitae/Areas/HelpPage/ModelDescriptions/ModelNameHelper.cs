@@ -1,4 +1,4 @@
-namespace CurriculumViate.Areas.HelpPage.ModelDescriptions
+namespace CurriculumVitae.Areas.HelpPage.ModelDescriptions
 {
     using System;
     using System.Globalization;
@@ -29,7 +29,11 @@ namespace CurriculumViate.Areas.HelpPage.ModelDescriptions
             genericTypeName = genericTypeName?.Substring(0, genericTypeName.IndexOf('`'));
             var argumentTypeNames = genericArguments.Select(GetModelName).ToArray();
 
-            modelName = string.Format(CultureInfo.InvariantCulture, "{0}Of{1}", genericTypeName, string.Join("And", argumentTypeNames));
+            modelName = string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}Of{1}",
+                genericTypeName,
+                string.Join("And", argumentTypeNames));
 
             return modelName;
         }

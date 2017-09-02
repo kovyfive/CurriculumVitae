@@ -1,7 +1,9 @@
-namespace CurriculumViate.Areas.HelpPage.App_Start
+namespace CurriculumVitae.Areas.HelpPage.App_Start
 {
     using System.Net.Http.Headers;
     using System.Web.Http;
+
+    using CurriculumVitae.Areas.HelpPage.SampleGeneration;
 
     /// <summary>
     /// Use this class to customize the Help Page.

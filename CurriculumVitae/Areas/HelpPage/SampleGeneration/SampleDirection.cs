@@ -1,4 +1,4 @@
-namespace CurriculumViate.Areas.HelpPage
+namespace CurriculumVitae.Areas.HelpPage.SampleGeneration
 {
     /// <summary>
     /// Indicates whether the sample is used for request or response
@@ -6,6 +6,7 @@ namespace CurriculumViate.Areas.HelpPage
     public enum SampleDirection
     {
         Request = 0,
+
         Response
     }
 }

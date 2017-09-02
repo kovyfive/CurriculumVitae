@@ -1,6 +1,9 @@
-﻿namespace CurriculumViate
+﻿namespace CurriculumVitae
 {
     using System;
+
+    using CurriculumVitae.Models;
+    using CurriculumVitae.Providers;
 
     using Microsoft.AspNet.Identity;
     using Microsoft.AspNet.Identity.Owin;
@@ -8,11 +11,7 @@
     using Microsoft.Owin.Security.Cookies;
     using Microsoft.Owin.Security.OAuth;
 
-    using Models;
-
     using Owin;
-
-    using Providers;
 
     /// <summary>
     /// The startup class wit external login
@@ -25,13 +24,14 @@
             PublicClientId = "web";
 
             OAuthOptions = new OAuthAuthorizationServerOptions
-            {
-                TokenEndpointPath = new PathString("/Token"),
-                AuthorizeEndpointPath = new PathString("/Account/Authorize"),
-                Provider = new ApplicationOAuthProvider(PublicClientId),
-                AccessTokenExpireTimeSpan = TimeSpan.FromDays(14),
-                AllowInsecureHttp = true
-            };
+                               {
+                                   TokenEndpointPath = new PathString("/Token"),
+                                   AuthorizeEndpointPath =
+                                       new PathString("/Account/Authorize"),
+                                   Provider = new ApplicationOAuthProvider(PublicClientId),
+                                   AccessTokenExpireTimeSpan = TimeSpan.FromDays(14),
+                                   AllowInsecureHttp = true
+                               };
         }
 
         public static OAuthAuthorizationServerOptions OAuthOptions { get; }
@@ -46,19 +46,29 @@
             app.CreatePerOwinContext<ApplicationSignInManager>(ApplicationSignInManager.Create);
 
             // Enable the application to use a cookie to store information for the signed in user
-            app.UseCookieAuthentication(new CookieAuthenticationOptions
-            {
-                AuthenticationType = DefaultAuthenticationTypes.ApplicationCookie,
-                LoginPath = new PathString("/Account/Login"),
-                Provider = new CookieAuthenticationProvider
-                {
-                    // Enables the application to validate the security stamp when the user logs in.
-                    // This is a security feature which is used when you change a password or add an external login to your account.  
-                    OnValidateIdentity = SecurityStampValidator.OnValidateIdentity<ApplicationUserManager, ApplicationUser>(
-                        TimeSpan.FromMinutes(20),
-                        (manager, user) => user.GenerateUserIdentityAsync(manager))
-                }
-            });
+            app.UseCookieAuthentication(
+                new CookieAuthenticationOptions
+                    {
+                        AuthenticationType = DefaultAuthenticationTypes.ApplicationCookie,
+                        LoginPath = new PathString("/Account/Login"),
+                        Provider =
+                            new CookieAuthenticationProvider
+                                {
+                                    // Enables the application to validate the security stamp when the user logs in.
+                                    // This is a security feature which is used when you change a password or add an external login to your account.  
+                                    OnValidateIdentity =
+                                        SecurityStampValidator
+                                        .OnValidateIdentity
+                                        <ApplicationUserManager,
+                                        ApplicationUser>(
+                                            TimeSpan.FromMinutes(
+                                                20),
+                                            (manager, user) =>
+                                            user
+                                                .GenerateUserIdentityAsync
+                                                (manager))
+                                }
+                    });
 
             // Use a cookie to temporarily store information about a user logging in with a third party login provider
             app.UseExternalSignInCookie(DefaultAuthenticationTypes.ExternalCookie);

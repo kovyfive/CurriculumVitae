@@ -1,10 +1,9 @@
-using System;
-using System.Text;
-using System.Web;
-using System.Web.Http.Description;
-
-namespace CurriculumViate.Areas.HelpPage
+namespace CurriculumVitae.Areas.HelpPage
 {
+    using System.Text;
+    using System.Web;
+    using System.Web.Http.Description;
+
     public static class ApiDescriptionExtensions
     {
         /// <summary>
@@ -26,7 +25,8 @@ namespace CurriculumViate.Areas.HelpPage
             }
 
             var friendlyPath = new StringBuilder();
-            friendlyPath.AppendFormat("{0}-{1}",
+            friendlyPath.AppendFormat(
+                "{0}-{1}",
                 description.HttpMethod.Method,
                 localPath.Replace("/", "-").Replace("{", string.Empty).Replace("}", string.Empty));
             if (queryKeyString != null)

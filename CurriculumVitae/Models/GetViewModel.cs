@@ -1,4 +1,4 @@
-﻿namespace CurriculumViate.Models
+﻿namespace CurriculumVitae.Models
 {
     // Models returned by MeController actions.
     public class GetViewModel

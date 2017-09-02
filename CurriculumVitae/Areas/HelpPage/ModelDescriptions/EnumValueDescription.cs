@@ -1,4 +1,4 @@
-namespace CurriculumViate.Areas.HelpPage.ModelDescriptions
+namespace CurriculumVitae.Areas.HelpPage.ModelDescriptions
 {
     public class EnumValueDescription
     {

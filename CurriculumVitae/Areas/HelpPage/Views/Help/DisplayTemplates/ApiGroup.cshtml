@@ -1,7 +1,5 @@
-@using System.Web.Http.Controllers
-@using System.Web.Http.Description
 @using CurriculumViate.Areas.HelpPage
-@model IGrouping<HttpControllerDescriptor, ApiDescription>
+@model IGrouping<System.Web.Http.Controllers.HttpControllerDescriptor, System.Web.Http.Description.ApiDescription>
 
 @{
     var controllerDocumentation = ViewBag.DocumentationProvider != null ? ViewBag.DocumentationProvider.GetDocumentation(Model.Key) : null;

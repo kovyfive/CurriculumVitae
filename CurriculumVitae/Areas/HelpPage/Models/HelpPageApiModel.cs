@@ -1,10 +1,11 @@
-namespace CurriculumViate.Areas.HelpPage.Models
+namespace CurriculumVitae.Areas.HelpPage.Models
 {
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Net.Http.Headers;
     using System.Web.Http.Description;
-    using ModelDescriptions;
+
+    using CurriculumVitae.Areas.HelpPage.ModelDescriptions;
 
     /// <summary>
     /// The model that represents an API displayed on the help page.
@@ -28,9 +29,15 @@ namespace CurriculumViate.Areas.HelpPage.Models
         public ApiDescription ApiDescription { get; set; }
 
         /// <summary>
-        /// Gets the <see cref="ParameterDescription"/> collection that describes the URI parameters for the API.
+        /// Gets the error messages associated with this model.
         /// </summary>
-        public Collection<ParameterDescription> UriParameters { get; private set; }
+        public Collection<string> ErrorMessages { get; private set; }
+
+        /// <summary>
+        /// Gets the request body parameter descriptions.
+        /// </summary>
+        public IList<ParameterDescription> RequestBodyParameters
+            => GetParameterDescriptions(this.RequestModelDescription);
 
         /// <summary>
         /// Gets or sets the documentation for the request.
@@ -41,11 +48,6 @@ namespace CurriculumViate.Areas.HelpPage.Models
         /// Gets or sets the <see cref="ModelDescription"/> that describes the request body.
         /// </summary>
         public ModelDescription RequestModelDescription { get; set; }
-
-        /// <summary>
-        /// Gets the request body parameter descriptions.
-        /// </summary>
-        public IList<ParameterDescription> RequestBodyParameters => GetParameterDescriptions(this.RequestModelDescription);
 
         /// <summary>
         /// Gets or sets the <see cref="ModelDescription"/> that describes the resource.
@@ -68,9 +70,9 @@ namespace CurriculumViate.Areas.HelpPage.Models
         public IDictionary<MediaTypeHeaderValue, object> SampleResponses { get; private set; }
 
         /// <summary>
-        /// Gets the error messages associated with this model.
+        /// Gets the <see cref="ParameterDescription"/> collection that describes the URI parameters for the API.
         /// </summary>
-        public Collection<string> ErrorMessages { get; private set; }
+        public Collection<ParameterDescription> UriParameters { get; private set; }
 
         private static IList<ParameterDescription> GetParameterDescriptions(ModelDescription modelDescription)
         {
