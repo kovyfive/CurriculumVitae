@@ -22,8 +22,11 @@
         {
             this.Request.GetOwinContext().Authentication.Challenge(this.LoginProvider);
 
-            var response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
-            response.RequestMessage = this.Request;
+            var response = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+            {
+                RequestMessage = this.Request
+            };
+
             return Task.FromResult(response);
         }
     }

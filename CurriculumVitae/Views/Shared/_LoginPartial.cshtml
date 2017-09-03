@@ -7,7 +7,7 @@
 
         <ul class="nav navbar-nav navbar-right">
             <li>
-                @Html.ActionLink("Hello " + User.Identity.GetUserName() + "!", "Index", "Manage", routeValues: new { area = string.Empty }, htmlAttributes: new { title = "Manage" })
+                @Html.ActionLink("Hello " + User.Identity.GetUserName() + "!", "Index", "Manage", new { area = string.Empty }, new { title = "Manage" })
             </li>
             <li>
                 <a href="javascript:sessionStorage.removeItem('accessToken');$('#logoutForm').submit();">Log off</a>
@@ -18,7 +18,7 @@
 else
 {
     <ul class="nav navbar-nav navbar-right">
-        <li>@Html.ActionLink("Register", "Register", "Account", routeValues: new { area = string.Empty }, htmlAttributes: new { id = "registerLink" })</li>
-        <li>@Html.ActionLink("Log in", "Login", "Account", routeValues: new { area = string.Empty }, htmlAttributes: new { id = "loginLink" })</li>
+        <li>@Html.ActionLink("Register", "Register", "Account", new { area = string.Empty }, new { id = "registerLink" })</li>
+        <li>@Html.ActionLink("Log in", "Login", "Account", new { area = string.Empty }, new { id = "loginLink" })</li>
     </ul>
 }

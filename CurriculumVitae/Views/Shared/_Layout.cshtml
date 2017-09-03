@@ -29,7 +29,7 @@
 </div>
 <div class="container body-content">
     @RenderBody()
-    @RenderSection("SPAViews", required: false)
+    @RenderSection("SPAViews", false)
     <hr/>
     <footer>
         <p>&copy; @DateTime.Now.Year - My ASP.NET Application</p>
@@ -38,6 +38,6 @@
 
 @Scripts.Render("~/bundles/jquery")
 @Scripts.Render("~/bundles/bootstrap")
-@RenderSection("Scripts", required: false)
+@RenderSection("Scripts", false)
 </body>
 </html>
